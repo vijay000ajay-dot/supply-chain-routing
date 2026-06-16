@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supply Chain Routing Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="app-background"></div>
+
+  <header class="top-bar">
+    <div class="brand">
+      <div class="brand-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M3 7h13l3 5v9H3V7z"/>
+          <path d="M16 7l-3-4H3"/>
+          <circle cx="7.5" cy="18.5" r="1.5"/>
+          <circle cx="17.5" cy="18.5" r="1.5"/>
+        </svg>
+      </div>
+      <div>
+        <p class="eyebrow">Logistics Optimization</p>
+        <h1>Supply Chain Routing Engine</h1>
+      </div>
+    </div>
+    <div class="network-pill">
+      <span>{{ network.vertices }} Hubs</span>
+      <span class="divider">•</span>
+      <span>{{ network.edges }} Routes</span>
+      <span class="divider">•</span>
+      <span>Dijkstra + Min-Heap</span>
+    </div>
+  </header>
+
+  <main class="dashboard">
+    <section class="panel control-panel">
+      <div class="panel-header">
+        <h2>Route Planner</h2>
+        <p>Select hubs and an optimization metric, then compute the best path.</p>
+      </div>
+
+      <form id="route-form" class="route-form" novalidate>
+        <div class="form-grid">
+          <label class="field">
+            <span>Starting Hub</span>
+            <select id="source" name="source" required>
+              <option value="" disabled selected>Select origin</option>
+              {% for hub in hubs %}
+              <option value="{{ hub.name }}" data-type="{{ hub.type }}">
+                {{ hub.name }} ({{ hub.type }})
+              </option>
+              {% endfor %}
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Destination Hub</span>
+            <select id="destination" name="destination" required>
+              <option value="" disabled selected>Select destination</option>
+              {% for hub in hubs %}
+              <option value="{{ hub.name }}" data-type="{{ hub.type }}">
+                {{ hub.name }} ({{ hub.type }})
+              </option>
+              {% endfor %}
+            </select>
+          </label>
+
+          <label class="field field-wide">
+            <span>Routing Metric</span>
+            <select id="metric" name="metric" required>
+              {% for metric in metrics %}
+              <option value="{{ metric.value }}" {% if loop.first %}selected{% endif %}>
+                {{ metric.label }}
+              </option>
+              {% endfor %}
+            </select>
+            <small id="metric-description">{{ metrics[0].description }}</small>
+          </label>
+        </div>
+
+        <button type="submit" id="find-route-btn" class="primary-btn">
+          <span class="btn-label">Find Route</span>
+          <span class="btn-spinner" hidden></span>
+        </button>
+      </form>
+
+      <div id="form-error" class="inline-error" role="alert" hidden></div>
+    </section>
+
+    <section id="results-section" class="panel results-panel" hidden>
+      <div class="panel-header">
+        <h2>Optimized Route</h2>
+        <p id="result-subtitle">—</p>
+      </div>
+
+      <div class="path-banner">
+        <div class="path-label">Route Path</div>
+        <div id="path-display" class="path-display"></div>
+      </div>
+
+      <div class="stats-grid">
+        <article class="stat-card">
+          <p class="stat-label">Total Distance</p>
+          <p id="stat-distance" class="stat-value">—</p>
+        </article>
+        <article class="stat-card">
+          <p class="stat-label">Fuel Cost</p>
+          <p id="stat-cost" class="stat-value">—</p>
+        </article>
+        <article class="stat-card">
+          <p class="stat-label">Transit Time</p>
+          <p id="stat-time" class="stat-value">—</p>
+        </article>
+        <article class="stat-card">
+          <p class="stat-label">Max Risk</p>
+          <p id="stat-risk" class="stat-value">—</p>
+        </article>
+      </div>
+
+      <div class="legs-section">
+        <h3>Step-by-Step Trajectory</h3>
+        <div id="legs-container" class="legs-container"></div>
+      </div>
+
+      <details class="complexity-details">
+        <summary>Algorithm Complexity Breakdown</summary>
+        <div id="complexity-content" class="complexity-grid"></div>
+      </details>
+    </section>
+
+    <section class="panel info-panel">
+      <div class="panel-header">
+        <h2>Network Overview</h2>
+        <p>Indian supply chain hubs loaded from mock data generator.</p>
+      </div>
+      <div class="hub-grid">
+        {% for hub in hubs %}
+        <article class="hub-card" data-type="{{ hub.type }}">
+          <span class="hub-type">{{ hub.type }}</span>
+          <h3>{{ hub.name }}</h3>
+          <p>{{ hub.latitude }}, {{ hub.longitude }}</p>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Built with Flask • Pure Python Graph + Min-Heap + Dijkstra</p>
+  </footer>
+
+  <script>
+    window.METRIC_DESCRIPTIONS = {{ metrics | tojson }};
+  </script>
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
